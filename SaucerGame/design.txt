@@ -1,0 +1,263 @@
+Assignment 3 - Tyler Wendlandt
+
+**** User Documentation
+
+How to compile: $: make all
+How to run: $: ./game
+
+Upon Game Startup, a main menu will be displayed which displays the title, 
+controls, how to quit and how to start playing. Once the game has started
+player 1 use the ',' key to move left, and the '.' key to move right; player 
+2 use the 'c' key to move right, the 'x' key to move left and the 'z' key to 
+shoot a rocket. The SPACE key, for player 1, is used to fire rockets; for 
+player 2 use the 'z' key. Fire rockets to destroy the saucers of the form 
+'<--->' before they escape the screen and to defeat destroyers before they
+destroy your defenses.
+
+Destroyer:
+	  _______________
+	 <_______________>
+
+Some Important Notes:
+	if two saucers are occupying the same space and they get hit by a
+	rocket, only one gets destroyed.
+
+
+Press 'Q' to quit at any time.
+Upon Defeat, either by too many saucers escaping, or by destroyed defenses,
+the game will pause and display a message. Press 'Q' to exit.
+
+IMPROVEMENTS:
+	Destroyer (as shown above) randomly appears in intervals. Doesn't
+	leave the screen, just changes direction. Occupies several rows and
+	shoots back at you with it's super huge cannon. If the destroyer dies
+	it's rocket fades.
+
+	Two Player addition, option in the main menu to play two player.
+	Controls are shown above. Shared rocket pool and score. Help your
+	friends save our planet! Fight the saucers!
+
+**** Developer Documentation
+
+** Code Structure
+
+The main function:
+==================
+	does all the game setup which includes creating all of the threads. 
+	The main functions main use is to receive input until the game has ended.
+
+Setup:
+======
+
+void setup():
+	makes the appropriate calls to initialize curses
+
+void setRocketsToDead(struct rocket *r):
+	initializes all the rockets' isAlive attribute to 0
+
+Displaying Info & Menu Output:
+==============================
+void printStartMessage():
+	prints the start menu that displays the controls for player 1 and 2. How to 
+	quit and start the game
+
+void printEndGameMessage(char *message):
+	INPUT: char *message
+	prints the game over message to the screen which includes the detailed 
+	message, the input.
+
+void displayInfo():
+	prints the current info at the bottom of the screen, this includes how to 
+	quit, escaped saucers, rockets left.
+
+void eraseInfo():
+	deletes the current info from the screen
+
+Collision Detection:
+====================
+void *collisionDetection():
+	collisionDetection runs on a separate thread. it iterates through all the 
+	saucers and rockets and makes a call to compareCoords to check if they are 
+	occupying the same coordinates at any given time.
+
+void compareCoords(int i, int j):
+	INPUT: int i, int j
+	compareCoords checks if saucer[i] is alive and if it is occupying the same 
+	coordinates as an alive rocket[j]. if so, there has been a collision and 
+	the saucer & rocket are destroyed. The remaining rockets are incremented.
+	compareCoords also checks if rocket[j] has hit the destroyer, if the 
+	destroyer is currently alive.
+
+void *checkDestRocketCollision():
+	checks if the current, alive, destroyer rocket has hit any of the player's 
+	cannons.
+
+Cannon:
+=======
+void setupCannon(int players):
+	INPUT: int players
+	initializes the cannon structures (1 or 2) with the appropriate attributes
+
+int getCannonCol(int player):
+	INPUT: int player (1 or 2)
+	returns the specific player's cannon's current column
+
+int getCannonHit(int player):
+	INPUT: int player
+	returns whether a specific player's cannon has been hit by a destroyer 
+	rocket or not.
+
+void setCannonHit(int player):
+	INPUT: int player
+	sets the specific player's cannon's hit attribute to 1 to indicate it has 
+	been hit by a destroyer rocket
+
+void moveCannon(int dir, int player):
+	INPUT: int dir (-1 or 1), int player (1 or 2)
+	adds dir to a specific player's cannon's col attribute to indicate it has 
+	moved in said direction (1 for right, -1 for left). It then calls 
+	displayCannon(player).
+
+void displayCannon(int player):
+	INPUT: int player (1 or 2)
+	makes the call to curses to display the new position of the specific 
+	player's cannon to the screen, using curses.
+
+
+
+Saucers (Spawning & lifecycle):
+===============================
+void *setupSaucer():
+	runs on a separate thread. Creates new saucers at random intervals. When 
+	a new saucer is created a new thread is spawned for that saucer.
+
+void initSaucer(struct saucer *ship, int row, int delay):
+	INPUT: struct saucer *ship, int delay, int row
+	initializes the saucer structure with appropriate attributes, such as it's 
+	row, speed, etc.
+
+void *animateSaucer(void *arg):
+	INPUT: void *arg (the saucer)
+	this function animates the saucer by moving it along the screen and making 
+	the appropriate calls to curses to display it.
+
+Rockets (Spawning & lifecycle):
+===============================
+void shootRocket(int player):
+	INPUT: int player (either 1 or 2)
+	starts a rocket thread and decrements the rockets left. Finds the first 
+	rocket that has the attribute isAlive set to 0 makes a call to 
+	activate/animate that rocket. The new rocket is animated on a new thread.
+
+void *setupRocket(void *arg):
+	INPUT: void *arg (the rocket)
+	makes a call to initRocket to set the rocket's attributes and then calls 
+	animateRocket.
+
+void initRocket(struct rocket *r)
+	INPUT: struct rocket *r
+	sets the rocket's initial attributes, such as row, column, speed, etc.
+
+void animateRocket(struct rocket *r)
+	INPUT: struct rocket *r
+	this function animates the rocket by moving it along the screen and making 
+	the appropriate calls to curses to display it. Once the rocket has left the 
+	screen, or hit something, it erases itself and sets it's isAlive attribute 
+	to 0.
+
+Destroyer (Spawning & lifecycle):
+=================================
+void *sendDestroyer(void *arg):
+	INPUT: void *arg (destroyer structure)
+	creates a new destroyer in random intervals. Only one can be alive at a 
+	time. Makes call
+
+void initDestroyer(struct destroyer *ship, int row, int delay):
+	INPUT: struct destroyer *ship, int row, int delay
+	initialize the destroyer with the appropriate attributes
+
+animateDestroyer(pthread_t thread, struct destroyer *ship):
+	INPUT: pthread_t thread, struct destroyer *ship
+	moves the destroyer along the screen by updating the coordinates and making 
+	the appropriate calls to curses.
+
+Destroyer Rocket:
+================= 
+void *shootDestRocket(void *args):
+	INPUT: void *args (struct destroyer)
+	generates destroyer rockets at random intervals. it makes the call to 
+	initialize and animate the destroyer rocket.
+
+void initDestRocket(struct destroyer *ship)
+	INPUT: struct destroyer *ship
+	initialize the destroyer rocket with the appropriate starting attributes, 
+	such as row, column, speed, etc.
+
+void animateDestRocket():
+	this thread movest the destroyer rocket along the screen by updating it's 
+	coordinates and displaying it to the screen with curses.
+
+void eraseDestroyerRocket()
+	erases the current destroyerRocket from the screen
+
+** Threads
+Main thread: 
+is the game loop, and is reserved for input handling.
+
+rocketThreads: 
+each rocketThread is meant for an individual rocket, which
+is shot by the users cannon when the space key is pressed. This thread
+moves the rocket structure along a coordinate path and updates the screen
+for each frame.
+
+saucerSetup:
+saucer setup is thread that splits off from the main immediately and generates
+the new saucers. It does so by sleeping for random intervals between each 
+saucer creation.
+
+sThread: 
+sThreads are the threads for the default saucers. Each saucer has it's own
+thread. These threads are responsible for initializing the saucer's struct,
+altering the saucer's coordinates, and updating the screen after each frame.
+
+destroyerThread:
+The destroyer thread is reserved for the improved saucers, which do not leave
+the screen and attack back. Much like sThread, destroyerThread is responsible
+for a single saucer, it initializes the structure, alters the coordinates, and
+updates the screen. Also destroyerThreads create a second thread for each of
+the destroyer's rockets.
+
+destroyerRocketThread:
+Much like the regulare rocketThread, the destroyerRocketThread is meant for 
+and individual rocket. It initializes the structure, updates the coordinates,
+and displays it to the screen.
+
+collisionThread:
+This thread is used to iterate through each live rocket and live saucer and
+check if they are occupying the same coordinates at any given time. If 
+they are then a collision has occured and the appropriate flags are raised.
+
+destCollisionThread:
+This thread is much like the collisionThread, except it checks if a destroyer
+rocket has collided with a user cannon. When a collision occurs, the 
+appropriate flags are raised and the game displays an end-game message.
+
+gameMonitor:
+gameMonitor is seperate thread that constantly checks the state of the game.
+If a game ending flag is raised it properly stops all the background operations
+pauses the output. It also displays the end-game messages.
+
+** Critical Sections
+
+locks: mx - curses, escaped - for escaping saucers.
+
+Each time a call to curses is made it must be in a critical section of code.
+So in each module that has an animate function there is at least one critical
+section of code that makes calls to curses which is monitored by a mutex lock.
+There is also a lock for the number of escaped saucers as that shared variable 
+is used in several places. 
+
+There are several shared resources that are not monitored because I felt that
+it was not necessary to lock down each shared resource. I locked the ones that 
+I knew needed to be, because if they weren't they could lead to odd outputs, or
+deadlocks. 

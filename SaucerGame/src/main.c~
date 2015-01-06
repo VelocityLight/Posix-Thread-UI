@@ -76,98 +76,11 @@ int	score = 0;
  * the threads.
  * The main functions main use is to receive input until the game has ended.
  */
-int main(int ac, char *av[])
-{
-	int	       	i, c, quitFlag, twoPlayer;		
-	pthread_t	collisionThread;
-	pthread_t	destCollisionThread;
-	pthread_t	gameMonitor;
-	void	      	*animate();	
-	
-	quitFlag = 0;
 
-	setup();
-	
-	/*
-	 * Display start screen, have the user press 'S' to start
-	 * the game.
-	 */
-	printStartMessage();
-	while (1) {
-		c = getch();
-		if (c == '1') {
-			twoPlayer = 0;
-			clear();
-			refresh();
-			break;
-		} else if (c == '2') {
-			twoPlayer = 1;
-			clear();
-			refresh();
-			break;
-		} else if (c == 'Q') {
-			quitFlag = 1;
-			break;
-		}
-	}	
-		
-
-	if (twoPlayer) {
-		setupCannon(2);	
-		displayCannon(2);
-	} else {
-		setupCannon(1);
-	}
-	
-	setRocketsToDead(rockets);
-	displayCannon(1);
-	displayInfo();
-
-	if (pthread_create(&saucerSetup, NULL, setupSaucer, NULL)) {
-		endwin();
-		exit(0);
-	} 	
-	pthread_create(&destroyerThread, NULL, sendDestroyer, &destShip); 
-	pthread_create(&collisionThread, NULL, collisionDetection, NULL);
-	pthread_create(&destCollisionThread, NULL, checkDestRocketCollision, NULL);
-	pthread_create(&gameMonitor, NULL, checkEndConditions, NULL);
-
-	/* process user input */
-	while(!quitFlag) {
-		c = getch();
-
-		if ( c == 'Q' || quitFlag){
-			 quitFlag = 1;
-			 break;
-		} else if (c == ',' && !endGame) {
-			moveCannon(-1, 1);
-		} else if (c == '.' && !endGame) {
-			moveCannon(1, 1);
-		} else if (c == 'x' && !endGame) {
-			moveCannon(-1, 2);
-		} else if (c == 'c' && !endGame) {
-			moveCannon(1, 2);
-		} else if (c == 'z' && !endGame) {
-			shootRocket(2);
-		} else if (c == ' ' && !endGame) {
-			shootRocket(1);	
-		}	
-	}
-
-	/* cancel all the threads */
-	pthread_mutex_lock(&mx);
-	for (i=0; i < MAX_ROCKETS; i++) {
-		pthread_cancel(rocketThreads[i]);
-	}
-	pthread_cancel(collisionThread);
-	pthread_cancel(destCollisionThread);
-	pthread_cancel(gameMonitor);
-	endwin();
-	return 0;
-}
 
 /*
  * checkEndConditions runs on a separate thread, called gameMonitor, and 
+
  * it's main purpose is to constantly check. If the game has reached a 
  * state which is deemed game-ending
  */
@@ -276,6 +189,7 @@ void printEndGameMessage(char *Message) {
 
 /*
  * starts a rocket thread, and decrements the rockets left
+
  */
 void shootRocket(int player) {
 	int 	i;
@@ -378,6 +292,7 @@ void compareCoords(int i, int j) {
 		|| rockets[j].row == (destShip.row + 2))) {
 
                 rockets[j].hit = 1;
+
 		destShip.hit += 1;
 	}
 }
@@ -427,4 +342,94 @@ void setup()
 	crmode();
 	noecho();
 	clear();
+}
+
+int main(int ac, char *av[])
+{
+	int	       	i, c, quitFlag, twoPlayer;		
+	pthread_t	collisionThread;
+	pthread_t	destCollisionThread;
+	pthread_t	gameMonitor;
+	void	      	*animate();	
+	
+	quitFlag = 0;
+
+	setup();
+	
+	/*
+	 * Display start screen, have the user press 'S' to start
+	 * the game.
+	 */
+	printStartMessage();
+	while (1) {
+		c = getch();
+		if (c == '1') {
+			twoPlayer = 0;
+			clear();
+			refresh();
+			break;
+		} else if (c == '2') {
+			twoPlayer = 1;
+			clear();
+			refresh();
+			break;
+		} else if (c == 'Q') {
+			quitFlag = 1;
+			break;
+		}
+	}	
+		
+
+	if (twoPlayer) {
+		setupCannon(2);	
+		displayCannon(2);
+	} else {
+		setupCannon(1);
+	}
+	
+	setRocketsToDead(rockets);
+	displayCannon(1);
+	displayInfo();
+
+	if (pthread_create(&saucerSetup, NULL, setupSaucer, NULL)) {
+		endwin();
+		exit(0);
+	} 	
+	pthread_create(&destroyerThread, NULL, sendDestroyer, &destShip); 
+	pthread_create(&collisionThread, NULL, collisionDetection, NULL);
+	pthread_create(&destCollisionThread, NULL, checkDestRocketCollision, NULL);
+	pthread_create(&gameMonitor, NULL, checkEndConditions, NULL);
+
+	/* process user input */
+	while(!quitFlag) {
+		c = getch();
+
+		if ( c == 'Q' || quitFlag){
+			 quitFlag = 1;
+			 break;
+		} else if (c == ',' && !endGame) {
+			moveCannon(-1, 1);
+		} else if (c == '.' && !endGame) {
+			moveCannon(1, 1);
+		} else if (c == 'x' && !endGame) {
+			moveCannon(-1, 2);
+		} else if (c == 'c' && !endGame) {
+			moveCannon(1, 2);
+		} else if (c == 'z' && !endGame) {
+			shootRocket(2);
+		} else if (c == ' ' && !endGame) {
+			shootRocket(1);	
+		}	
+	}
+
+	/* cancel all the threads */
+	pthread_mutex_lock(&mx);
+	for (i=0; i < MAX_ROCKETS; i++) {
+		pthread_cancel(rocketThreads[i]);
+	}
+	pthread_cancel(collisionThread);
+	pthread_cancel(destCollisionThread);
+	pthread_cancel(gameMonitor);
+	endwin();
+	return 0;
 }

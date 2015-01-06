@@ -4,6 +4,7 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<string.h>
+#include 	<linux/fs.h>
 
 #include	"cannon.h"
 #include	"destroyer.h"
@@ -124,13 +125,13 @@ void *checkEndConditions() {
 void printStartMessage() {
 	char *titleMsg = "---SAUCER INVADERS!---";
 	char *playerOne = "PLAYER ONE CONTROLS:";
-	char *rightMoveMsg = "Press ',' to move right";
-	char *leftMoveMsg = "Press '.' to move left";
-	char *shootMsg = "Press 'SPACE' to shoot a rocket";
+	char *rightMoveMsg = "Press 'j' to move right";
+	char *leftMoveMsg = "Press 'l' to move left";
+	char *shootMsg = "Press 'i' to shoot a rocket";
 	char *playerTwo = "PLAYER TWO CONTROLS:";
-	char *pTwoRightMoveMsg = "Press 'c' to move right";
-	char *pTwoLeftMoveMsg = "Press 'x' to move left";
-	char *pTwoShootMsg = "Press 'z' to shoot a rocket";
+	char *pTwoRightMoveMsg = "Press 'd' to move right";
+	char *pTwoLeftMoveMsg = "Press 'a' to move left";
+	char *pTwoShootMsg = "Press 'w' to shoot a rocket";
 	char *quitMsg = "Press 'Q' to quit";
 	char *header = "--------------------------";
 	char *startMsg = "Press '1' to start single player game";
@@ -407,17 +408,17 @@ int main(int ac, char *av[])
 		if ( c == 'Q' || quitFlag){
 			 quitFlag = 1;
 			 break;
-		} else if (c == ',' && !endGame) {
+		} else if (c == 'j' && !endGame) {
 			moveCannon(-1, 1);
-		} else if (c == '.' && !endGame) {
+		} else if (c == 'l' && !endGame) {
 			moveCannon(1, 1);
-		} else if (c == 'x' && !endGame) {
+		} else if (c == 'a' && !endGame) {
 			moveCannon(-1, 2);
-		} else if (c == 'c' && !endGame) {
+		} else if (c == 'd' && !endGame) {
 			moveCannon(1, 2);
-		} else if (c == 'z' && !endGame) {
+		} else if (c == 'w' && !endGame) {
 			shootRocket(2);
-		} else if (c == ' ' && !endGame) {
+		} else if (c == 'i' && !endGame) {
 			shootRocket(1);	
 		}	
 	}
